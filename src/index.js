@@ -45,7 +45,7 @@ function is_object (value) {
     return typeof value === 'object' && value !== null;
 }
 
-function standard_replacer (key, value) {
+function standard_replacer ( key, value, path ) {
     if ( is_object(value) ) {
 	if ( ArrayBuffer.isView( value ) ) {
 	    let name			= value.constructor.name;
@@ -66,15 +66,21 @@ function standard_replacer (key, value) {
     return value;
 }
 
-function human_readable_replacer (key, value) {
+function human_readable_replacer ( key, value, path ) {
     if ( is_object(value) && ["Buffer", ...TYPED_ARRAYS].includes( value.constructor.name ) ) {
 	return bytes_to_hexstr( value, value.constructor.name );
+    }
+    if ( typeof value === "bigint" ) {
+	return value.toString() + "n";
     }
 
     return value;
 }
 
-function standard_reviver (key, value) {
+// Reviver cannot have a 'path' parameter (like replacer does) because 'JSON.parse' calls reviver on
+// the children before the parent.  So we have no way to track the parent keys to form a path
+// argument.
+function standard_reviver ( key, value ) {
     if ( is_object(value) ) {
 	if ( value.type === "Buffer" ) {
 	    debug && log("Using standard reviver for:", value.type );
@@ -126,6 +132,9 @@ function fromBytes ( bytes, reviver ) {
 }
 
 function toString ( value, indent, replacer, ordered = true ) {
+    if ( replacer !== undefined && typeof replacer !== "function" )
+	throw new TypeError(`Replacer must be a function; not type '${typeof replacer}'`);
+
     let keys				= [];
     value				= walk( value, (k,v) => {
 	if ( typeof k === "string" && ordered === true )
@@ -159,20 +168,25 @@ function toString ( value, indent, replacer, ordered = true ) {
 }
 
 function toReadableString ( value, indent = 4, replacer ) {
-    let circular_memory			= [];
-    value				= walk( value, (k,v) => {
-	if ( circular_memory.indexOf(v) !== -1 )
-	    return `[Circular]`;
+    if ( replacer !== undefined && typeof replacer !== "function" )
+	throw new TypeError(`Replacer must be a function; not type '${typeof replacer}'`);
+
+    let seen				= new WeakMap();
+    value				= walk( value, (k,v,path) => {
+	if ( seen.get(v) )
+	    return `[Circular reference to #/${seen.get(v).join('/')}]`;
 
 	if ( is_object(v) && v.constructor.name === "Object" ) {
-	    circular_memory.push( v ); // Add value before copy
+	    seen.set( v, path ); // Add value before copy
 	    v				= Object.assign({}, v);
 	}
 
 	if ( typeof replacer === "function" )
 	    v				= replacer( k, v );
 
-	circular_memory.push( v );
+
+	if ( is_object(v) )
+	    seen.set( v, path );
 
 	return human_readable_replacer( k, v );
     });
@@ -182,6 +196,9 @@ function toReadableString ( value, indent = 4, replacer ) {
 
 
 function fromString ( source, reviver ) {
+    if ( reviver !== undefined && typeof reviver !== "function" )
+	throw new TypeError(`Reviver must be a function; not type '${typeof reviver}'`);
+
     if ( source instanceof Uint8Array )
 	return fromBytes( source, reviver );
     else

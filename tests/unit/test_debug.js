@@ -37,17 +37,37 @@ function basic_tests () {
 	input.self			= input;
 	let json			= debug( input, null );
 
-	expect( json			).to.equal(`{"self":"[Circular]"}`);
+	expect( json			).to.equal(`{"self":"[Circular reference to #/]"}`);
     });
 
     it("should handle circular reference made by replacer", async () => {
-	let input			= {};
-	let json			= debug( input, null, (k,v) => {
-	    v.self			= v;
-	    return v;
-	});
+	{
+	    let input			= {};
+	    let json			= debug( input, null, (k,v) => {
+		v.self			= v;
+		return v;
+	    });
 
-	expect( json			).to.equal(`{"self":"[Circular]"}`);
+	    expect( json		).to.equal(`{"self":"[Circular reference to #/]"}`);
+	}
+	{ // Ensure that circular doesn't replace primitive types
+	    for (let primitive of [null, true, "string", 1234] ) {
+		let json_encoded	= JSON.stringify( primitive );
+		expect(
+		    debug({ "a": primitive, "b": primitive }, null )
+		).to.equal(`{"a":${json_encoded},"b":${json_encoded}}`);
+	    }
+
+	    let primitive		= Symbol();
+	    expect(
+		debug({ "a": primitive, "b": primitive }, null )
+	    ).to.equal(`{}`);
+
+	    primitive			= 9007199254740991n;
+	    expect(
+		debug({ "a": primitive, "b": primitive }, null )
+	    ).to.equal(`{"a":"9007199254740991n","b":"9007199254740991n"}`);
+	}
     });
 }
 
