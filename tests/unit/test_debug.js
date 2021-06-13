@@ -13,23 +13,23 @@ function basic_tests () {
     it("should handle Buffer", async () => {
 	let json			= debug( Buffer.from("Hello") );
 
-	expect( json			).to.equal(`"<Buffer 48 65 6c 6c 6f>"`);
+	expect( json			).to.equal(`<Buffer 48 65 6c 6c 6f>`);
     });
 
     it("should handle large Buffer", async () => {
 	let json			= debug( Buffer.from(new Uint8Array(51)) );
 
-	expect( json			).to.equal(`"<Buffer${' 00'.repeat(50)} ... 1 more byte>"`);
+	expect( json			).to.equal(`<Buffer${' 00'.repeat(50)} ... 1 more byte>`);
 
 	let json1			= debug( Buffer.from(new Uint8Array(52)) );
 
-	expect( json1			).to.equal(`"<Buffer${' 00'.repeat(50)} ... 2 more bytes>"`);
+	expect( json1			).to.equal(`<Buffer${' 00'.repeat(50)} ... 2 more bytes>`);
     });
 
     it("should handle Uint8Array", async () => {
 	let json			= debug( new Uint8Array(Buffer.from("Hello")) );
 
-	expect( json			).to.equal(`"<Uint8Array 48 65 6c 6c 6f>"`);
+	expect( json			).to.equal(`Uint8Array { 72, 101, 108, 108, 111 }`);
     });
 
     it("should handle circular reference", async () => {
@@ -37,7 +37,7 @@ function basic_tests () {
 	input.self			= input;
 	let json			= debug( input, null );
 
-	expect( json			).to.equal(`{"self":"[Circular reference to #/]"}`);
+	expect( json			).to.equal(`{"self":[Circular reference to #/]}`);
     });
 
     it("should handle circular reference made by replacer", async () => {
@@ -48,7 +48,7 @@ function basic_tests () {
 		return v;
 	    });
 
-	    expect( json		).to.equal(`{"self":"[Circular reference to #/]"}`);
+	    expect( json		).to.equal(`{"self":[Circular reference to #/]}`);
 	}
 	{ // Ensure that circular doesn't replace primitive types
 	    for (let primitive of [null, true, "string", 1234] ) {
@@ -66,7 +66,7 @@ function basic_tests () {
 	    primitive			= 9007199254740991n;
 	    expect(
 		debug({ "a": primitive, "b": primitive }, null )
-	    ).to.equal(`{"a":"9007199254740991n","b":"9007199254740991n"}`);
+	    ).to.equal(`{"a":9007199254740991n,"b":9007199254740991n}`);
 	}
     });
 }

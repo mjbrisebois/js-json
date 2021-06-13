@@ -40,6 +40,14 @@ function basic_tests () {
 
 	expect( result			).to.deep.equal( input );
     });
+
+    it("should handle ISO date", async () => {
+	let input			= new Date();
+	let bytes			= json.serialize( input );
+	let result			= parse( bytes );
+
+	expect( result			).to.deep.equal( input );
+    });
 }
 
 describe("Parse", () => {

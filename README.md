@@ -24,8 +24,9 @@ let each library walk the entire object just to do there 1 thing.
 ### Features
 
 - Serialize/deserialize to JSON string
-- Serialize/deserialize to `Uint8Array`
+- Serialize/deserialize to JSON byte array (`Uint8Array`)
 - Serialize/deserialize handles [Typed Array Views](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays#typed_array_views) & Buffer
+- Serialize/deserialize handles `Date` objects
 - Object key ordering for deterministic serializing
 - Debugging format for displaying human-readable JSON-like object dumps
 - Debugging formatter handles circular references

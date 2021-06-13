@@ -41,6 +41,17 @@ function bytes_to_hexstr ( bytes, name ) {
     return `<${name} ${hexstr}>`;
 }
 
+function view_to_repr ( bytes, name ) {
+    debug && log("Creating representation for ArrayBuffer view:", name, bytes );
+    let truncated_bytes			= bytes.length - 50;
+    let intstr				= [].slice.call(bytes, 0, 50).join(', ') + (
+	truncated_bytes > 0
+	    ? ` ... ${bytes.length-50} more ` + ( truncated_bytes === 1 ? "byte" : "bytes")
+	    : ""
+    );
+    return `${name} { ${intstr} }`;
+}
+
 function is_object (value) {
     return typeof value === 'object' && value !== null;
 }
@@ -66,12 +77,20 @@ function standard_replacer ( key, value, path ) {
     return value;
 }
 
+const RAW_PREFIX			= "__#raw#__";
+const RAW_PREFIX_REGEX			= new RegExp( `\"${RAW_PREFIX}(.+?)\"`, "g" );
 function human_readable_replacer ( key, value, path ) {
-    if ( is_object(value) && ["Buffer", ...TYPED_ARRAYS].includes( value.constructor.name ) ) {
-	return bytes_to_hexstr( value, value.constructor.name );
+    if ( is_object(value) ) {
+	if ( "Buffer" === value.constructor.name ) {
+	    return RAW_PREFIX + bytes_to_hexstr( value, value.constructor.name );
+	}
+	if ( ArrayBuffer.isView( value ) ) {
+	// if ( TYPED_ARRAYS.includes( value.constructor.name ) ) {
+	    return RAW_PREFIX + view_to_repr( value, value.constructor.name );
+	}
     }
     if ( typeof value === "bigint" ) {
-	return value.toString() + "n";
+	return RAW_PREFIX + value.toString() + "n";
     }
 
     return value;
@@ -80,6 +99,7 @@ function human_readable_replacer ( key, value, path ) {
 // Reviver cannot have a 'path' parameter (like replacer does) because 'JSON.parse' calls reviver on
 // the children before the parent.  So we have no way to track the parent keys to form a path
 // argument.
+const ISO_REGEX				= /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z)/;
 function standard_reviver ( key, value ) {
     if ( is_object(value) ) {
 	if ( value.type === "Buffer" ) {
@@ -100,6 +120,12 @@ function standard_reviver ( key, value ) {
 	    debug && log("Using standard reviver for:", value.type );
 	    return new BUILTINS[value.type]( value.data );
 	}
+    }
+
+    if ( typeof value === "string" ) {
+	debug && console.log("Checking for ISO date:", value, ISO_REGEX.test(value) );
+	if ( value.endsWith("Z") && ISO_REGEX.test(value) )
+	    return new Date(value);
     }
 
     return value;
@@ -174,7 +200,7 @@ function toReadableString ( value, indent = 4, replacer ) {
     let seen				= new WeakMap();
     value				= walk( value, (k,v,path) => {
 	if ( seen.get(v) )
-	    return `[Circular reference to #/${seen.get(v).join('/')}]`;
+	    return `${RAW_PREFIX}[Circular reference to #/${seen.get(v).join('/')}]`;
 
 	if ( is_object(v) && v.constructor.name === "Object" ) {
 	    seen.set( v, path ); // Add value before copy
@@ -191,7 +217,9 @@ function toReadableString ( value, indent = 4, replacer ) {
 	return human_readable_replacer( k, v );
     });
 
-    return JSON.stringify( value, null, indent );
+    return JSON.stringify( value, null, indent ).replace(RAW_PREFIX_REGEX, function (match, value) {
+	return value;
+    });
 }
 
 
@@ -212,8 +240,9 @@ function fromString ( source, reviver ) {
 
 module.exports = {
     toBytes,
-    fromBytes,
     "serialize": toBytes,
+
+    fromBytes,
     "deserialize": fromBytes,
 
     toString,

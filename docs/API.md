@@ -59,6 +59,7 @@ Differences from `JSON.parse`
 - Revives serialized [Typed Array
   Views](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays#typed_array_views)
 - Revives `Buffer` if present; otherwise, falls back to `Uint8Array`
+- Revives `Date` objects if a string matches the ISO date format
 
 
 ## `toReadableString( value, indent = 4, replacer )`
@@ -67,9 +68,12 @@ inspired by Node's REPL formatting.
 
 Differences from `toString`
 
-- Formats [Typed Array
-  Views](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays#typed_array_views) & Buffers
+- Formats Buffers like Node's REPL
     - eg. `<Buffer 48 65 6c 6c 6f>`
+- Formats [Typed Array
+  Views](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays#typed_array_views)
+    - eg. `Uint8Array { 72, 101, 108, 108, 111 }`
+- Handles `BigInt`
 - Replaces circular references with `[Circular]`
 
 
