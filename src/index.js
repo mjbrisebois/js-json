@@ -123,7 +123,7 @@ function standard_reviver ( key, value ) {
     }
 
     if ( typeof value === "string" ) {
-	debug && console.log("Checking for ISO date:", value, ISO_REGEX.test(value) );
+	debug && log("Checking for ISO date:", value, ISO_REGEX.test(value) );
 	if ( value.endsWith("Z") && ISO_REGEX.test(value) )
 	    return new Date(value);
     }
