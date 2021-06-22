@@ -169,7 +169,9 @@ function toString ( value, indent, replacer, ordered = true ) {
 	try {
 	    v				= v.toJSON( k );
 	} catch (err)  {
-	    if ( !(err instanceof TypeError && err.message.includes("toJSON is not a function")) )
+	    if ( !(err instanceof TypeError
+		   && ( err.message.includes("toJSON is not a function")
+			|| err.message.includes("Cannot read property 'toJSON'"))) )
 		throw err;
 	}
 
@@ -202,9 +204,13 @@ function toReadableString ( value, indent = 4, replacer ) {
 	if ( seen.get(v) )
 	    return `${RAW_PREFIX}[Circular reference to #/${seen.get(v).join('/')}]`;
 
-	if ( is_object(v) && v.constructor.name === "Object" ) {
+	if ( is_object(v) ) {
 	    seen.set( v, path ); // Add value before copy
-	    v				= Object.assign({}, v);
+
+	    if ( v.constructor.name === "Object" )
+		v			= Object.assign({}, v);
+	    if ( Array.isArray(v) )
+		v			= v.slice();
 	}
 
 	if ( typeof replacer === "function" )

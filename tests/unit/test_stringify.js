@@ -41,6 +41,16 @@ function basic_tests () {
 	    "type": "Uint8Array",
 	}) );
     });
+
+    it("should handle null", async () => {
+	let json			= stringify({
+	    "empty": null,
+	});
+
+	expect( json			).to.deep.equal( JSON.stringify({
+	    "empty": null,
+	}) );
+    });
 }
 
 describe("Stringify", () => {

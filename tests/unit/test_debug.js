@@ -11,44 +11,50 @@ if ( process.env.LOG_LEVEL )
 
 function basic_tests () {
     it("should handle Buffer", async () => {
-	let json			= debug( Buffer.from("Hello") );
+	let buf				= Buffer.from("Hello");
+	let input			= [{
+	    "buffer": buf,
+	}];
 
-	expect( json			).to.equal(`<Buffer 48 65 6c 6c 6f>`);
+	let text			= debug( input );
+
+	expect( text			).to.equal(`[\n    {\n        "buffer": <Buffer 48 65 6c 6c 6f>\n    }\n]`);
+	expect( input[0].buffer		).to.deep.equal( buf ); // Catch leftover RAW_PREFIX
     });
 
     it("should handle large Buffer", async () => {
-	let json			= debug( Buffer.from(new Uint8Array(51)) );
+	let text			= debug( Buffer.from(new Uint8Array(51)) );
 
-	expect( json			).to.equal(`<Buffer${' 00'.repeat(50)} ... 1 more byte>`);
+	expect( text			).to.equal(`<Buffer${' 00'.repeat(50)} ... 1 more byte>`);
 
-	let json1			= debug( Buffer.from(new Uint8Array(52)) );
+	let text1			= debug( Buffer.from(new Uint8Array(52)) );
 
-	expect( json1			).to.equal(`<Buffer${' 00'.repeat(50)} ... 2 more bytes>`);
+	expect( text1			).to.equal(`<Buffer${' 00'.repeat(50)} ... 2 more bytes>`);
     });
 
     it("should handle Uint8Array", async () => {
-	let json			= debug( new Uint8Array(Buffer.from("Hello")) );
+	let text			= debug( new Uint8Array(Buffer.from("Hello")) );
 
-	expect( json			).to.equal(`Uint8Array { 72, 101, 108, 108, 111 }`);
+	expect( text			).to.equal(`Uint8Array { 72, 101, 108, 108, 111 }`);
     });
 
     it("should handle circular reference", async () => {
 	let input			= {};
 	input.self			= input;
-	let json			= debug( input, null );
+	let text			= debug( input, null );
 
-	expect( json			).to.equal(`{"self":[Circular reference to #/]}`);
+	expect( text			).to.equal(`{"self":[Circular reference to #/]}`);
     });
 
     it("should handle circular reference made by replacer", async () => {
 	{
 	    let input			= {};
-	    let json			= debug( input, null, (k,v) => {
+	    let text			= debug( input, null, (k,v) => {
 		v.self			= v;
 		return v;
 	    });
 
-	    expect( json		).to.equal(`{"self":[Circular reference to #/]}`);
+	    expect( text		).to.equal(`{"self":[Circular reference to #/]}`);
 	}
 	{ // Ensure that circular doesn't replace primitive types
 	    for (let primitive of [null, true, "string", 1234] ) {
