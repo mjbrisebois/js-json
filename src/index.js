@@ -84,8 +84,11 @@ function human_readable_replacer ( key, value, path ) {
 	if ( "Buffer" === value.constructor.name ) {
 	    return RAW_PREFIX + bytes_to_hexstr( value, value.constructor.name );
 	}
+	else if ( value.type === "Buffer" ) {
+	    return RAW_PREFIX + bytes_to_hexstr( value.data, value.type );
+	}
+
 	if ( ArrayBuffer.isView( value ) ) {
-	// if ( TYPED_ARRAYS.includes( value.constructor.name ) ) {
 	    return RAW_PREFIX + view_to_repr( value, value.constructor.name );
 	}
     }
@@ -195,6 +198,7 @@ function toString ( value, indent, replacer, ordered = true ) {
     return JSON.stringify( value, keys, indent );
 }
 
+
 function toReadableString ( value, indent = 4, replacer ) {
     if ( replacer !== undefined && typeof replacer !== "function" )
 	throw new TypeError(`Replacer must be a function; not type '${typeof replacer}'`);
@@ -207,6 +211,15 @@ function toReadableString ( value, indent = 4, replacer ) {
 	if ( is_object(v) ) {
 	    seen.set( v, path ); // Add value before copy
 
+	    try {
+		v			= v.toJSON( k );
+	    } catch (err)  {
+		if ( !(err instanceof TypeError
+		       && ( err.message.includes("toJSON is not a function")
+			    || err.message.includes("Cannot read property 'toJSON'"))) )
+		    throw err;
+	    }
+
 	    if ( v.constructor.name === "Object" )
 		v			= Object.assign({}, v);
 	    if ( Array.isArray(v) )
@@ -215,7 +228,6 @@ function toReadableString ( value, indent = 4, replacer ) {
 
 	if ( typeof replacer === "function" )
 	    v				= replacer( k, v );
-
 
 	if ( is_object(v) )
 	    seen.set( v, path );
