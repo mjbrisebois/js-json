@@ -66,6 +66,10 @@ Differences from `JSON.parse`
 JSON encode a value with more human readable replacements.  Several formatting features were
 inspired by Node's REPL formatting.
 
+- `indent` - takes an `options` object instead
+  - `options.indent` - override default indent value
+  - `options.truncate_views` - how many values to display for `ArrayBuffer` views (default: 50)
+
 Differences from `toString`
 
 - Formats Buffers like Node's REPL

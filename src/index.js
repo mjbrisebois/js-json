@@ -30,23 +30,23 @@ function hex (n, pad = 8) {
     return ( "0".repeat(pad) + n.toString(16) ).substr(-pad);
 }
 
-function bytes_to_hexstr ( bytes, name ) {
+function bytes_to_hexstr ( bytes, name, truncate_views ) {
     debug && log("Creating hex representation for:", name, bytes );
-    let truncated_bytes			= bytes.length - 50;
-    let hexstr				= [].slice.call(bytes, 0, 50).map(n => hex(n,2)).join(' ') + (
+    let truncated_bytes			= bytes.length - truncate_views;
+    let hexstr				= [].slice.call(bytes, 0, truncate_views).map(n => hex(n,2)).join(' ') + (
 	truncated_bytes > 0
-	    ? ` ... ${bytes.length-50} more ` + ( truncated_bytes === 1 ? "byte" : "bytes")
+	    ? ` ... ${bytes.length-truncate_views} more ` + ( truncated_bytes === 1 ? "byte" : "bytes")
 	    : ""
     );
     return `<${name} ${hexstr}>`;
 }
 
-function view_to_repr ( bytes, name ) {
-    debug && log("Creating representation for ArrayBuffer view:", name, bytes );
-    let truncated_bytes			= bytes.length - 50;
-    let intstr				= [].slice.call(bytes, 0, 50).join(', ') + (
-	truncated_bytes > 0
-	    ? ` ... ${bytes.length-50} more ` + ( truncated_bytes === 1 ? "byte" : "bytes")
+function view_to_repr ( values, name, truncate_views ) {
+    debug && log("Creating representation for ArrayBuffer view:", name, values );
+    let truncated_values		= values.length - truncate_views;
+    let intstr				= [].slice.call(values, 0, truncate_views).join(', ') + (
+	truncated_values > 0
+	    ? ` ... ${values.length-truncate_views} more ` + ( truncated_values === 1 ? "value" : "values")
 	    : ""
     );
     return `${name} { ${intstr} }`;
@@ -56,7 +56,7 @@ function is_object (value) {
     return typeof value === 'object' && value !== null;
 }
 
-function standard_replacer ( key, value, path ) {
+function standard_replacer ( key, value ) {
     if ( is_object(value) ) {
 	if ( ArrayBuffer.isView( value ) ) {
 	    let name			= value.constructor.name;
@@ -79,17 +79,17 @@ function standard_replacer ( key, value, path ) {
 
 const RAW_PREFIX			= "__#raw#__";
 const RAW_PREFIX_REGEX			= new RegExp( `\"${RAW_PREFIX}(.+?)\"`, "g" );
-function human_readable_replacer ( key, value, path ) {
+function human_readable_replacer ( key, value, truncate_views ) {
     if ( is_object(value) ) {
 	if ( "Buffer" === value.constructor.name ) {
-	    return RAW_PREFIX + bytes_to_hexstr( value, value.constructor.name );
+	    return RAW_PREFIX + bytes_to_hexstr( value, value.constructor.name, truncate_views );
 	}
 	else if ( value.type === "Buffer" ) {
-	    return RAW_PREFIX + bytes_to_hexstr( value.data, value.type );
+	    return RAW_PREFIX + bytes_to_hexstr( value.data, value.type, truncate_views );
 	}
 
 	if ( ArrayBuffer.isView( value ) ) {
-	    return RAW_PREFIX + view_to_repr( value, value.constructor.name );
+	    return RAW_PREFIX + view_to_repr( value, value.constructor.name, truncate_views );
 	}
     }
     if ( typeof value === "bigint" ) {
@@ -199,7 +199,16 @@ function toString ( value, indent, replacer, ordered = true ) {
 }
 
 
-function toReadableString ( value, indent = 4, replacer ) {
+function toReadableString ( value, indent, replacer ) {
+    let options				= {
+	"indent": 4,
+	"truncate_views": 50,
+    };
+    if ( typeof indent === "object" && indent !== null )
+	options				= Object.assign( options, indent );
+    else if ( indent !== undefined )
+	options.indent			= indent;
+
     if ( replacer !== undefined && typeof replacer !== "function" )
 	throw new TypeError(`Replacer must be a function; not type '${typeof replacer}'`);
 
@@ -232,10 +241,10 @@ function toReadableString ( value, indent = 4, replacer ) {
 	if ( is_object(v) )
 	    seen.set( v, path );
 
-	return human_readable_replacer( k, v );
+	return human_readable_replacer( k, v, options.truncate_views );
     });
 
-    return JSON.stringify( value, null, indent ).replace(RAW_PREFIX_REGEX, function (match, value) {
+    return JSON.stringify( value, null, options.indent ).replace(RAW_PREFIX_REGEX, function (match, value) {
 	return value;
     });
 }

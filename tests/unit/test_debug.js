@@ -23,19 +23,46 @@ function basic_tests () {
     });
 
     it("should handle large Buffer", async () => {
-	let text			= debug( Buffer.from(new Uint8Array(51)) );
-
-	expect( text			).to.equal(`<Buffer${' 00'.repeat(50)} ... 1 more byte>`);
-
-	let text1			= debug( Buffer.from(new Uint8Array(52)) );
-
-	expect( text1			).to.equal(`<Buffer${' 00'.repeat(50)} ... 2 more bytes>`);
+	{
+	    let text			= debug( Buffer.from(new Uint8Array(51)) );
+	    expect( text		).to.equal(`<Buffer${' 00'.repeat(50)} ... 1 more byte>`);
+	}
+	{
+	    let text			= debug( Buffer.from(new Uint8Array(52)) );
+	    expect( text		).to.equal(`<Buffer${' 00'.repeat(50)} ... 2 more bytes>`);
+	}
     });
 
-    it("should handle Uint8Array", async () => {
+    it("should adjust trim limit", async () => {
+	{
+	    let text			= debug( Buffer.from(new Uint8Array(5)), { "truncate_views": 5 } );
+	    expect( text		).to.equal(`<Buffer${' 00'.repeat(5)}>`);
+	}
+	{
+	    let text			= debug( Buffer.from(new Uint8Array(51)), { "truncate_views": 5 } );
+	    expect( text		).to.equal(`<Buffer${' 00'.repeat(5)} ... 46 more bytes>`);
+	}
+	{
+	    let text			= debug( new Uint8Array(51), { "truncate_views": 5 } );
+	    expect( text		).to.equal(`Uint8Array { 0, 0, 0, 0, 0 ... 46 more values }`);
+	}
+    });
+
+    it("should handle Uint8Array view", async () => {
 	let text			= debug( new Uint8Array(Buffer.from("Hello")) );
 
 	expect( text			).to.equal(`Uint8Array { 72, 101, 108, 108, 111 }`);
+    });
+
+    it("should handle large views", async () => {
+	{
+	    let text			= debug( new Uint16Array(51) );
+	    expect( text		).to.equal(`Uint16Array {${' 0,'.repeat(50).slice(0,-1)} ... 1 more value }`);
+	}
+	{
+	    let text			= debug( new Int32Array(52) );
+	    expect( text		).to.equal(`Int32Array {${' 0,'.repeat(50).slice(0,-1)} ... 2 more values }`);
+	}
     });
 
     it("should handle circular reference", async () => {
