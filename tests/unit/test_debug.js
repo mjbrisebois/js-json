@@ -102,6 +102,28 @@ function basic_tests () {
 	    ).to.equal(`{"a":9007199254740991n,"b":9007199254740991n}`);
 	}
     });
+
+    it("should not circular reference primitive values", async () => {
+	class Something {
+	    toJSON () {
+		return "primitive value";
+	    }
+	}
+	const eventual_primitive	= new Something();
+
+	const input			= {
+	    "eventual_primitive": eventual_primitive,
+	    "sublevel": {
+		"list": [
+		    eventual_primitive,
+		],
+		"eventual_primitive": eventual_primitive,
+	    }
+	};
+	let text			= debug( input );
+
+	expect( text			).to.equal( JSON.stringify(input, null, 4) );
+    });
 }
 
 describe("Debug", () => {

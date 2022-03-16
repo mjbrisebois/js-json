@@ -204,7 +204,7 @@ function toReadableString ( value, indent, replacer ) {
 	"indent": 4,
 	"truncate_views": 50,
     };
-    if ( typeof indent === "object" && indent !== null )
+    if ( is_object(indent) )
 	options				= Object.assign( options, indent );
     else if ( indent !== undefined )
 	options.indent			= indent;
@@ -218,8 +218,6 @@ function toReadableString ( value, indent, replacer ) {
 	    return `${RAW_PREFIX}[Circular reference to #/${seen.get(v).join('/')}]`;
 
 	if ( is_object(v) ) {
-	    seen.set( v, path ); // Add value before copy
-
 	    try {
 		v			= v.toJSON( k );
 	    } catch (err)  {
@@ -228,6 +226,8 @@ function toReadableString ( value, indent, replacer ) {
 			    || err.message.includes("Cannot read property 'toJSON'"))) )
 		    throw err;
 	    }
+	    if ( is_object(v) )
+		seen.set( v, path ); // Add value after toJSON but before copy
 
 	    if ( v.constructor.name === "Object" )
 		v			= Object.assign({}, v);
