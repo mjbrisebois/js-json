@@ -214,8 +214,15 @@ function toReadableString ( value, indent, replacer ) {
 
     let seen				= new WeakMap();
     value				= walk( value, (k,v,path) => {
-	if ( seen.get(v) )
-	    return `${RAW_PREFIX}[Circular reference to #/${seen.get(v).join('/')}]`;
+	if ( seen.get(v) ) {
+	    const path_str		= path.join("/");
+	    const seen_path_str		= seen.get(v).join("/");
+
+	    if ( path_str.includes(seen_path_str) )
+		return `${RAW_PREFIX}[Circular reference to #/${seen_path_str}]`;
+	    else
+		return `${RAW_PREFIX}[Duplicate reference to object @ #/${seen_path_str}]`;
+	}
 
 	if ( is_object(v) ) {
 	    try {

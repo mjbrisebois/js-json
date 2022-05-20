@@ -124,6 +124,21 @@ function basic_tests () {
 
 	expect( text			).to.equal( JSON.stringify(input, null, 4) );
     });
+
+    it("should distinguish between references to another branch vs circular", async () => {
+	const u8			= new Uint16Array(1);
+	{
+	    const input			= {
+		"branch_1": u8,
+		"branch_2": {
+		    "ref": u8,
+		}
+	    };
+	    let text			= debug( input );
+
+	    expect( text		).to.equal(`{\n    "branch_1": Uint16Array { 0 },\n    "branch_2": {\n        "ref": [Duplicate reference to object @ #/branch_1]\n    }\n}`);
+	}
+    });
 }
 
 describe("Debug", () => {
