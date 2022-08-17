@@ -52,6 +52,20 @@ function view_to_repr ( values, name, truncate_views ) {
     return `${name} { ${intstr} }`;
 }
 
+function array_to_repr ( values, name, truncate_views ) {
+    debug && log("Creating representation for Array:", name, values );
+    if ( values.length === 0 )
+	return "[]";
+
+    let truncated_values		= values.length - truncate_views;
+    let intstr				= [].slice.call(values, 0, truncate_views).map( value => toReadableString(value) ).join(', ') + (
+	truncated_values > 0
+	    ? ` ... ${values.length-truncate_views} more ` + ( truncated_values === 1 ? "value" : "values")
+	    : ""
+    );
+    return `[ ${intstr} ]`;
+}
+
 function is_object (value) {
     return typeof value === 'object' && value !== null;
 }
@@ -90,6 +104,10 @@ function human_readable_replacer ( key, value, truncate_views ) {
 
 	if ( ArrayBuffer.isView( value ) ) {
 	    return RAW_PREFIX + view_to_repr( value, value.constructor.name, truncate_views );
+	}
+
+	if ( Array.isArray( value ) && !value.find( b => !(0 <= b && b < 256) ) ) {
+	    return RAW_PREFIX + array_to_repr( value, value.constructor.name, truncate_views );
 	}
     }
     if ( typeof value === "bigint" ) {

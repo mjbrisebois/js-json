@@ -65,6 +65,21 @@ function basic_tests () {
 	}
     });
 
+    it("should handle large Array", async () => {
+	{
+	    let text			= debug( Array(5).fill("something") );
+	    expect( text		).to.equal(`[\n${'    "something",\n'.repeat(5).slice(0,-2)}\n]`);
+	}
+	{
+	    let text			= debug( Array(101).fill("something") );
+	    expect( text		).to.equal(`[\n${'    "something",\n'.repeat(101).slice(0,-2)}\n]`);
+	}
+	{
+	    let text			= debug( Array.from(new Uint8Array(101)) );
+	    expect( text		).to.equal(`[${' 0,'.repeat(50).slice(0,-1)} ... 51 more values ]`);
+	}
+    });
+
     it("should handle circular reference", async () => {
 	let input			= {};
 	input.self			= input;
