@@ -1,6 +1,6 @@
 {
   "name": "@whi/json",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "A helper library for serializing objects to JSON, JSON-bytes, or a JSON-like string for debugging",
   "main": "src/index.js",
   "browser": "dist/json.bundled.js",
