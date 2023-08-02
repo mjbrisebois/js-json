@@ -37,6 +37,16 @@ function basic_tests () {
 	let result			= json.deserialize( bytes );
 	expect( result			).to.deep.equal( input );
     });
+
+    it("should handle null", async () => {
+	let input			= null;
+	let bytes			= serialize( input );
+
+	expect( bytes			).to.have.length( 4 );
+
+	let result			= json.deserialize( bytes );
+	expect( result			).to.deep.equal( input );
+    });
 }
 
 describe("Serialize", () => {

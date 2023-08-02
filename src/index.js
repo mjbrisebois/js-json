@@ -190,7 +190,8 @@ function toString ( value, indent, replacer, ordered = true ) {
 	try {
 	    v				= v.toJSON( k );
 	} catch (err)  {
-	    if ( !(err instanceof TypeError
+	    if ( v !== null
+		 && !(err instanceof TypeError
 		   && ( err.message.includes("toJSON is not a function")
 			|| err.message.includes("Cannot read property 'toJSON'"))) )
 		throw err;
