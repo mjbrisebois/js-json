@@ -106,7 +106,7 @@ function human_readable_replacer ( key, value, truncate_views ) {
 	    return RAW_PREFIX + view_to_repr( value, value.constructor.name, truncate_views );
 	}
 
-	if ( Array.isArray( value ) && !value.find( b => !(0 <= b && b < 256) ) ) {
+	if ( Array.isArray( value ) && value.every( b => typeof b === 'number' && b >= 0 && b <= 255) ) {
 	    return RAW_PREFIX + array_to_repr( value, value.constructor.name, truncate_views );
 	}
     }
@@ -233,6 +233,9 @@ function toReadableString ( value, indent, replacer ) {
 
     let seen				= new WeakMap();
     value				= walk( value, (k,v,path) => {
+        if ( v === undefined )
+            return `${RAW_PREFIX}undefined`;
+
 	if ( seen.get(v) ) {
 	    const path_str		= path.join("/");
 	    const seen_path_str		= seen.get(v).join("/");
@@ -270,9 +273,12 @@ function toReadableString ( value, indent, replacer ) {
 	return human_readable_replacer( k, v, options.truncate_views );
     });
 
-    return JSON.stringify( value, null, options.indent ).replace(RAW_PREFIX_REGEX, function (match, value) {
+    const json          = JSON.stringify( value ?? `${RAW_PREFIX}undefined`, null, options.indent );
+    const json_repr     = json.replace( RAW_PREFIX_REGEX, function (match, value) {
 	return value;
     });
+
+    return json_repr;
 }
 
 

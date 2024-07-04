@@ -154,6 +154,21 @@ function basic_tests () {
 	    expect( text		).to.equal(`{\n    "branch_1": Uint16Array { 0 },\n    "branch_2": {\n        "ref": [Duplicate reference to object @ #/branch_1]\n    }\n}`);
 	}
     });
+
+    it("should handle undefined", async () => {
+        {
+	    let input			= undefined;
+	    let text			= debug( input );
+
+	    expect( text		).to.equal(`undefined`);
+        }
+        {
+	    let input			= [ undefined, undefined, 1 ];
+	    let text			= debug( input );
+
+	    expect( text		).to.equal(`[\n    undefined,\n    undefined,\n    1\n]`);
+        }
+    });
 }
 
 describe("Debug", () => {
