@@ -258,7 +258,8 @@ function toReadableString ( value, indent, replacer ) {
 	    if ( is_object(v) )
 		seen.set( v, path ); // Add value after toJSON but before copy
 
-	    if ( v.constructor.name === "Object" )
+	    if ( Object.getPrototypeOf( v ) === null
+                 || v.constructor.name === "Object" )
 		v			= Object.assign({}, v);
 	    if ( Array.isArray(v) )
 		v			= v.slice();
