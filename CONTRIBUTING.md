@@ -14,7 +14,7 @@ See [docs/API.md](docs/API.md) for detailed API References
 Turns on debugging logs.
 
 ```javascript
-const json = require('@whi/json');
+import json from '@whi/json';
 
 json.logging(); // show debug logs
 ```
@@ -30,10 +30,7 @@ No build required.  Vanilla JS only.
 
 To run all tests with logging
 ```
-make test-debug
+make test
 ```
 
-- `make test-unit-debug` - **Unit tests only**
-- `make test-integration-debug` - **Integration tests only**
-
-> **NOTE:** remove `-debug` to run tests without logging
+- `make test-unit` - **Unit tests only**

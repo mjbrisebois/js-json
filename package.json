@@ -2,17 +2,22 @@
   "name": "@whi/json",
   "version": "0.1.9",
   "description": "A helper library for serializing objects to JSON, JSON-bytes, or a JSON-like string for debugging",
-  "main": "src/index.js",
+  "main": "src/index.ts",
+  "module": "lib/index.js",
   "browser": "dist/json.bundled.js",
+  "type": "module",
   "files": [
     "README.md",
-    "src/index.js",
+    "src/*.ts",
+    "lib/*.js",
+    "lib/*.d.ts",
+    "lib/*.js.map",
     "dist/json.bundled.js",
     "dist/json.bundled.js.map"
   ],
   "scripts": {
     "build": "webpack",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "format": "prettier --write \"tests/**/*.ts\" \"src/**/*.ts\""
   },
   "author": "Matthew Brisebois <matthew@webheroes.ca>",
   "license": "ISC",
@@ -24,9 +29,14 @@
     "@whi/object-walk": "^0.1.4"
   },
   "devDependencies": {
+    "@types/chai": "^5.2.2",
+    "@types/mocha": "^10.0.10",
     "@whi/stdlog": "^0.3.4",
     "chai": "^4.3.4",
     "mocha": "^10.0.0",
+    "prettier": "^3.5.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
     "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4"
   }

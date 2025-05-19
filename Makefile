@@ -7,27 +7,34 @@ package-lock.json:	package.json
 node_modules:		package-lock.json
 	npm install
 	touch $@
-build:			node_modules
+build:			node_modules lib/index.js
 
+dist/json.bundled.js: 	node_modules
+	rm -rf dist
+	npm run build
+
+lib/index.js:           src/*.ts Makefile
+	rm -rf lib
+	npx tsc -t es2022 -m es2022 --moduleResolution node --esModuleInterop   \
+		--strictNullChecks                                              \
+		--outDir lib -d --sourceMap src/index.ts
 
 #
 # Testing
 #
-test:			build test-setup
-	npx mocha --recursive ./tests
-test-debug:		build test-setup
-	LOG_LEVEL=silly npx mocha --recursive ./tests
+MOCHA_OPTS = --no-warnings --enable-source-maps -t 5000
 
-test-unit:		build test-setup
-	npx mocha ./tests/unit
-test-unit-debug:	build test-setup
-	LOG_LEVEL=silly npx mocha ./tests/unit
+test:				test-unit
 
-test-integration:	build test-setup
-	npx mocha ./tests/integration
-test-integration-debug:	build test-setup
-	LOG_LEVEL=silly npx mocha ./tests/integration
-test-setup:
+test-unit:			build
+	npx mocha $(MOCHA_OPTS) tests/unit/*.test.ts
+
+test-unit-%:			build
+	npx mocha $(MOCHA_OPTS) tests/unit/$*.test.ts
+test-unit-debug:
+test-unit-parse:
+test-unit-serialize:
+test-unit-stringify:
 
 
 #
@@ -48,8 +55,7 @@ clean-files-all-force:	clean-remove-chaff
 #
 # NPM
 #
-prepare-package:
-	npm run build
+prepare-package:	dist/json.bundled.js
 	gzip -kf dist/*.js
 preview-package:	clean-files test prepare-package
 	npm pack --dry-run .

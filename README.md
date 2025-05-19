@@ -41,7 +41,7 @@ npm i @whi/json
 ## Usage
 
 ```javascript
-const json = require('@whi/json');
+import json from '@whi/json';
 
 let input = {
     id: Buffer.from("Hello World")

@@ -9,8 +9,8 @@
 - `deserialize`  is an alias for `fromBytes`
 
 Examples assume the module is loaded like this
-```javascript
-const json = require('@whi/json');
+```typescript
+import json from '@whi/json';
 ```
 
 ### Argument: `replacer( key, value )`
@@ -18,9 +18,9 @@ The `replacer` callback is given the parent's key and the current value.  `this`
 parent object in-case you need access to it (ergo `this[key] == value`).
 
 Example of replacing `Uint8Array` with `Array`
-```javascript
-function replacer (key, value) {
-    if ( value instanceof Uint8Array )
+```typescript
+function replacer(key: string, value: any): any {
+    if (value instanceof Uint8Array)
         return [].slice.call(value);
     return value;
 }
@@ -31,10 +31,10 @@ The `reviver` callback is given the parent's key and the current value.  `this` 
 object in-case you need access to it (ergo `this[key] == value`).
 
 Example of reviving `Buffer`
-```javascript
-function reviver (key, value) {
-    if ( typeof value === "object" && value !== null && value.type === "Buffer" )
-        return Buffer.from( value.data );
+```typescript
+function reviver(key: string, value: any): any {
+    if (typeof value === "object" && value !== null && value.type === "Buffer")
+        return Buffer.from(value.data);
     return value;
 }
 ```

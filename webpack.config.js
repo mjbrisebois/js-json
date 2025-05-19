@@ -1,9 +1,9 @@
-const webpack			= require('webpack');
+import webpack				from 'webpack';
 
-module.exports = {
+export default {
     target: 'node',
     mode: 'production', // production | development
-    entry: [ './src/index.js' ],
+    entry: [ './lib/index.js' ],
     output: {
 	filename: 'json.bundled.js',
 	globalObject: 'this',

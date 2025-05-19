@@ -1,9 +1,13 @@
+// @ts-ignore
+import objwalk				from '@whi/object-walk';
+const { walk }				= objwalk;
 
-const { walk, ...objwalk }		= require('@whi/object-walk');
+export type ReplacerFunction = ( key: string, value: any ) => any;
+export type ReviverFunction = ( key: string, value: any ) => any;
 
 let debug				= false;
 
-function log ( msg, ...args ) {
+function log ( msg: any, ...args: any[] ) {
     let datetime			= (new Date()).toISOString();
     console.log(`${datetime} [ src/index. ]  INFO: ${msg}`, ...args );
 }
@@ -26,11 +30,11 @@ const TYPED_ARRAYS			= [
     "BigUint64Array",
 ];
 
-function hex (n, pad = 8) {
+function hex (n: number, pad = 8) {
     return ( "0".repeat(pad) + n.toString(16) ).substr(-pad);
 }
 
-function bytes_to_hexstr ( bytes, name, truncate_views ) {
+function bytes_to_hexstr ( bytes: Uint8Array, name: string, truncate_views: number ) {
     debug && log("Creating hex representation for:", name, bytes );
     let truncated_bytes			= bytes.length - truncate_views;
     let hexstr				= [].slice.call(bytes, 0, truncate_views).map(n => hex(n,2)).join(' ') + (
@@ -41,7 +45,7 @@ function bytes_to_hexstr ( bytes, name, truncate_views ) {
     return `<${name} ${hexstr}>`;
 }
 
-function view_to_repr ( values, name, truncate_views ) {
+function view_to_repr ( values: any, name: string, truncate_views: number ) {
     debug && log("Creating representation for ArrayBuffer view:", name, values );
     let truncated_values		= values.length - truncate_views;
     let intstr				= [].slice.call(values, 0, truncate_views).join(', ') + (
@@ -52,7 +56,7 @@ function view_to_repr ( values, name, truncate_views ) {
     return `${name} { ${intstr} }`;
 }
 
-function array_to_repr ( values, name, truncate_views ) {
+function array_to_repr ( values: Array<any>, name: string, truncate_views: number ) {
     debug && log("Creating representation for Array:", name, values );
     if ( values.length === 0 )
 	return "[]";
@@ -66,11 +70,11 @@ function array_to_repr ( values, name, truncate_views ) {
     return `[ ${intstr} ]`;
 }
 
-function is_object (value) {
+function is_object (value: any) {
     return typeof value === 'object' && value !== null;
 }
 
-function standard_replacer ( key, value ) {
+function standard_replacer ( value: any ) {
     if ( is_object(value) ) {
 	if ( ArrayBuffer.isView( value ) ) {
 	    let name			= value.constructor.name;
@@ -93,7 +97,7 @@ function standard_replacer ( key, value ) {
 
 const RAW_PREFIX			= "__#raw#__";
 const RAW_PREFIX_REGEX			= new RegExp( `\"${RAW_PREFIX}(.+?)\"`, "g" );
-function human_readable_replacer ( key, value, truncate_views ) {
+function human_readable_replacer ( value: any, truncate_views: any ) {
     if ( is_object(value) ) {
 	if ( "Buffer" === value.constructor.name ) {
 	    return RAW_PREFIX + bytes_to_hexstr( value, value.constructor.name, truncate_views );
@@ -121,7 +125,7 @@ function human_readable_replacer ( key, value, truncate_views ) {
 // the children before the parent.  So we have no way to track the parent keys to form a path
 // argument.
 const ISO_REGEX				= /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z)/;
-function standard_reviver ( key, value ) {
+function standard_reviver ( value: any ) {
     if ( is_object(value) ) {
 	if ( value.type === "Buffer" ) {
 	    debug && log("Using standard reviver for:", value.type );
@@ -139,7 +143,7 @@ function standard_reviver ( key, value ) {
 	}
 	else if ( TYPED_ARRAYS.includes( value.type ) ) {
 	    debug && log("Using standard reviver for:", value.type );
-	    return new BUILTINS[value.type]( value.data );
+	    return new BUILTINS[value.type as keyof typeof BUILTINS]( value.data );
 	}
     }
 
@@ -155,35 +159,40 @@ function standard_reviver ( key, value ) {
 const utf8 = {
     "_encoder": new TextEncoder(),
     "_decoder": new TextDecoder(),
-    encode ( str ) {
+    encode ( str: any ) {
 	return this._encoder.encode( str );
     },
-    decode ( bytes ) {
+    decode ( bytes: any ) {
 	return this._decoder.decode( bytes );
     },
 }
 
-function toBytes ( value, replacer ) {
-    let json_str			= toString( value, null, replacer );
+function toBytes ( value: any, replacer?: any ) {
+    let json_str			= toJsonString( value, null, replacer );
 
     debug && log("UTF-8 encode JSON string with length:", json_str.length );
     return utf8.encode( json_str );
 }
+export { toBytes as serialize };
 
-function fromBytes ( bytes, reviver ) {
+
+function fromBytes ( bytes: Uint8Array, reviver?: any ): any {
     debug && log("UTF-8 decode bytes with length:", bytes.length );
     let json_str			= utf8.decode( bytes );
 
     debug && log("UTF-8 decoded bytes to JSON with length:", json_str.length );
     return fromString( json_str, reviver );
 }
+export { fromBytes as deserialize };
 
-function toString ( value, indent, replacer, ordered = true ) {
+
+// @ts-ignore
+function toJsonString ( value: any, indent?: any, replacer?: ReplacerFunction, ordered: boolean = true ) {
     if ( replacer !== undefined && typeof replacer !== "function" )
 	throw new TypeError(`Replacer must be a function; not type '${typeof replacer}'`);
 
-    let keys				= [];
-    value				= walk( value, (k,v) => {
+    let keys: any[]			= [];
+    value				= walk( value, (k: any,v: any) => {
 	if ( typeof k === "string" && ordered === true )
 	    keys.push( k );
 
@@ -203,22 +212,24 @@ function toString ( value, indent, replacer, ordered = true ) {
 	if ( typeof replacer === "function" )
 	    v				= replacer( k, v );
 
-	return standard_replacer( k, v );
+	return standard_replacer( v );
     });
 
     if ( ordered === true ) {
 	keys.sort();
     }
     else {
+	// @ts-ignore
 	debug && console.warning("Using unordered keys for JSON.stringify");
     }
 
     debug && log("JSON stringify with keys:", keys );
     return JSON.stringify( value, keys, indent );
 }
+export { toJsonString as stringify };
 
 
-function toReadableString ( value, indent, replacer ) {
+function toReadableString ( value: any, indent?: any, replacer?: ReplacerFunction ) {
     let options				= {
 	"indent": 4,
 	"truncate_views": 50,
@@ -232,7 +243,7 @@ function toReadableString ( value, indent, replacer ) {
 	throw new TypeError(`Replacer must be a function; not type '${typeof replacer}'`);
 
     let seen				= new WeakMap();
-    value				= walk( value, (k,v,path) => {
+    value				= walk( value, (k: any,v: any,path: any) => {
         if ( v === undefined )
             return `${RAW_PREFIX}undefined`;
 
@@ -271,7 +282,7 @@ function toReadableString ( value, indent, replacer ) {
 	if ( is_object(v) )
 	    seen.set( v, path );
 
-	return human_readable_replacer( k, v, options.truncate_views );
+	return human_readable_replacer( v, options.truncate_views );
     });
 
     const json          = JSON.stringify( value ?? `${RAW_PREFIX}undefined`, null, options.indent );
@@ -281,9 +292,10 @@ function toReadableString ( value, indent, replacer ) {
 
     return json_repr;
 }
+export { toJsonString as debug };
 
 
-function fromString ( source, reviver ) {
+function fromString ( source: string | Uint8Array, reviver?: ReviverFunction ) {
     if ( reviver !== undefined && typeof reviver !== "function" )
 	throw new TypeError(`Reviver must be a function; not type '${typeof reviver}'`);
 
@@ -291,22 +303,23 @@ function fromString ( source, reviver ) {
 	return fromBytes( source, reviver );
     else
 	return JSON.parse( source, function (k,v) {
-	    v				= standard_reviver( k, v );
+	    v				= standard_reviver( v );
 	    return typeof reviver === "function"
 		? reviver( k, v )
 		: v;
 	});
 }
+export { fromString as parse };
 
-module.exports = {
+export default {
     toBytes,
     "serialize": toBytes,
 
     fromBytes,
     "deserialize": fromBytes,
 
-    toString,
-    "stringify": toString,
+    toJsonString,
+    "stringify": toJsonString,
 
     toReadableString,
     "debug": toReadableString,
