@@ -2,8 +2,8 @@
   "name": "@whi/json",
   "version": "0.2.0",
   "description": "A helper library for serializing objects to JSON, JSON-bytes, or a JSON-like string for debugging",
-  "main": "src/index.ts",
-  "module": "lib/index.js",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "browser": "dist/json.bundled.js",
   "type": "module",
   "files": [
@@ -26,7 +26,7 @@
     "url": "https://github.com/mjbrisebois/js-json/"
   },
   "dependencies": {
-    "@whi/object-walk": "^0.1.4"
+    "@whi/object-walk": "^0.4.2"
   },
   "devDependencies": {
     "@types/chai": "^5.2.2",

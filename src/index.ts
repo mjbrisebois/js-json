@@ -1,6 +1,5 @@
-// @ts-ignore
 import objwalk from '@whi/object-walk';
-const { walk } = objwalk;
+import { walk } from '@whi/object-walk';
 
 export type ReplacerFunction = (key: string, value: any) => any;
 export type ReviverFunction = (key: string, value: any) => any;
